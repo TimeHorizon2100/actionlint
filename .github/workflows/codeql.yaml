@@ -12,8 +12,35 @@ on:
 
 permissions:
   security-events: write
+  contents: read
+  pull-requests: write
 
 jobs:
+  pr-notification:
+    name: PR Review Request
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check for existing notification comment
+        id: check_comment
+        run: |
+          # Check if notification comment already exists
+          comment_exists=$(gh pr view "${{ github.event.number }}" --repo "${{ github.repository }}" --json comments --jq '.comments[]? | select(.body | contains("@TimeHorizon2100 potrzebna Twoja decyzja")) | .id' | head -1)
+          if [ -n "$comment_exists" ]; then
+            echo "comment_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "comment_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Add review request comment
+        if: steps.check_comment.outputs.comment_exists == 'false'
+        run: |
+          gh pr comment "${{ github.event.number }}" --repo "${{ github.repository }}" --body "@TimeHorizon2100 potrzebna Twoja decyzja – sprawdź proszę PR!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   analyze-go:
     name: Analyze Go
     runs-on: ubuntu-latest
