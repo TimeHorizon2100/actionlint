@@ -1,0 +1,66 @@
+name: Workflow Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
+
+jobs:
+  actionlint:
+    name: Validate GitHub Actions Workflows
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          
+      - name: Build actionlint from source
+        run: |
+          # Build actionlint binary from the repository source
+          CGO_ENABLED=0 go build ./cmd/actionlint
+          echo "Built actionlint version:"
+          ./actionlint --version
+          
+      - name: Validate workflow files with actionlint
+        run: |
+          echo "::add-matcher::.github/actionlint-matcher.json"
+          
+          # Run actionlint on all workflow files
+          echo "Validating GitHub Actions workflow files..."
+          if ./actionlint -color -verbose .github/workflows/*.yml .github/workflows/*.yaml; then
+            echo "✅ All workflow files are valid"
+          else
+            echo "❌ Workflow validation failed"
+            exit 1
+          fi
+          
+      - name: List validated files
+        run: |
+          echo "Validated workflow files:"
+          ls -la .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null || echo "No YAML workflow files found"
+          
+      # AI feedback integration placeholder for workflow analysis
+      - name: AI Workflow Analysis Integration Point
+        if: failure()
+        run: |
+          echo "::notice::AI Analysis Integration Point - Workflow Validation Results"
+          echo "This step serves as an integration point for future AI-powered workflow analysis."
+          echo "Failed workflow validation results can be processed here by GPT/Grok for:"
+          echo "- Syntax error explanations"
+          echo "- Best practice recommendations"
+          echo "- Security issue analysis"
+          echo "- Performance optimization suggestions"
+          # Future implementation: Parse actionlint results and send to AI service
+          # Example: ./actionlint -format json .github/workflows/*.yml | ai-workflow-analyzer

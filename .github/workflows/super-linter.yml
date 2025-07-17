@@ -1,0 +1,62 @@
+name: Super-Linter
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  super-linter:
+    name: Super-Linter
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Full git history is needed to get list of changed files
+          fetch-depth: 0
+      
+      - name: Run Super-Linter
+        uses: github/super-linter@v5
+        env:
+          # General settings
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Disable linters that are already covered by existing CI workflow
+          VALIDATE_GO: false              # Already covered by staticcheck, go vet, gofmt in ci.yaml
+          VALIDATE_TYPESCRIPT_ES: false   # Already covered by eslint in ci.yaml (playground)
+          VALIDATE_JAVASCRIPT_ES: false   # Already covered by eslint in ci.yaml (playground)
+          VALIDATE_CSS: false             # Already covered by stylelint in ci.yaml (playground)
+          VALIDATE_BASH: false            # Already covered by shellcheck in ci.yaml
+          VALIDATE_SHELL_SHFMT: false     # Shell formatting not enforced in existing CI
+          VALIDATE_DOCKER_HADOLINT: false # Already covered by hadolint in ci.yaml
+          
+          # Enable linters for additional validation not covered by existing CI
+          VALIDATE_YAML: true             # YAML syntax validation
+          VALIDATE_MARKDOWN: true         # Markdown linting
+          VALIDATE_JSON: true             # JSON syntax validation
+          VALIDATE_XML: true              # XML syntax validation (if any)
+          VALIDATE_RUBY: true             # Ruby syntax validation (for Homebrew formula)
+          VALIDATE_EDITORCONFIG: true     # EditorConfig validation
+          VALIDATE_GITHUB_ACTIONS: false  # Will be handled by dedicated actionlint workflow
+          
+          # Configure output
+          LOG_LEVEL: INFO
+          CREATE_LOG_FILE: true
+          
+          # Only lint changed files on PRs (not full repo)
+          FILTER_REGEX_EXCLUDE: "testdata/.*"  # Exclude test data files
+          
+      # AI feedback integration placeholder - can be extended in the future
+      - name: AI Code Analysis Integration Point
+        if: failure()
+        run: |
+          echo "::notice::AI Analysis Integration Point - Super-Linter Results"
+          echo "This step serves as an integration point for future AI-powered code analysis."
+          echo "Log files and linting results can be processed here by GPT/Grok for enhanced feedback."
+          echo "Super-Linter logs are available in the previous step for AI processing."
+          # Future implementation: Parse linter results and send to AI service for analysis
+          # Example: cat super-linter.log | ai-analyzer --context="golang-typescript-project"
