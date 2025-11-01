@@ -33,6 +33,28 @@ jobs:
           echo "Installed actionlint version:"
           actionlint --version
           
+      - name: Create actionlint matcher file
+        run: |
+          cat <<EOF > .github/actionlint-matcher.json
+          {
+            "problemMatcher": [
+              {
+                "owner": "actionlint",
+                "pattern": [
+                  {
+                    "regexp": "^(.*?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+          
       - name: Validate workflow files with actionlint
         run: |
           echo "::add-matcher::.github/actionlint-matcher.json"
