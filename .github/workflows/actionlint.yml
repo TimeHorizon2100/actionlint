@@ -39,11 +39,16 @@ jobs:
           
           # Run actionlint on all workflow files
           echo "Validating GitHub Actions workflow files..."
-          if ./actionlint -color -verbose .github/workflows/*.yml .github/workflows/*.yaml; then
-            echo "✅ All workflow files are valid"
+          files=$(find .github/workflows/ -type f \( -name "*.yml" -o -name "*.yaml" \))
+          if [ -z "$files" ]; then
+            echo "No workflow files found. Skipping validation."
           else
-            echo "❌ Workflow validation failed"
-            exit 1
+            if ./actionlint -color -verbose $files; then
+              echo "✅ All workflow files are valid"
+            else
+              echo "❌ Workflow validation failed"
+              exit 1
+            fi
           fi
           
       - name: List validated files
